@@ -97,7 +97,6 @@ class HiringDecisionResponse(BaseModel):
 # ============================================================================
 
 router = APIRouter(
-    prefix="/api/v1/explainability",
     tags=["explainability"]
 )
 

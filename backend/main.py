@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # Include explainability routes
-app.include_router(explainability_router, prefix="/api/v1", tags=["explainability"])
+app.include_router(explainability_router, prefix="/api/v1/explainability", tags=["explainability"])
 
 # Configure Groq API
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
