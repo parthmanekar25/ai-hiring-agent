@@ -235,22 +235,9 @@ def display_investment_analysis(investment: Dict[str, Any]):
     """Display investment analysis and ROI"""
     
     with st.expander("💼 Investment Analysis & ROI", expanded=True):
-        investment_level = investment.get("investment_level", "UNKNOWN")
         breakdown = investment.get("breakdown", {})
         resources = investment.get("resources_required", {})
         roi = investment.get("roi_analysis", {})
-        
-        # Investment level badge
-        if investment_level == "LOW":
-            level_color = "🟢"
-        elif investment_level == "MEDIUM":
-            level_color = "🟡"
-        elif investment_level == "HIGH":
-            level_color = "🟠"
-        else:
-            level_color = "🔴"
-        
-        st.markdown(f"### {level_color} Investment Level: {investment_level}")
         
         # Key metrics
         col1, col2, col3, col4 = st.columns(4)
