@@ -39,6 +39,22 @@ class ExplainabilityIntegration:
         skill_matches = interview_data.get("skill_analysis", {}).get("matched_skills", [])
         gaps = interview_data.get("skill_analysis", {}).get("gaps", {})
         
+        # Ensure gaps has all required fields
+        if not gaps:
+            gaps = {"missing_skills": [], "unclear_sections": [], "inconsistencies": []}
+        if "missing_skills" not in gaps:
+            gaps["missing_skills"] = []
+        if "unclear_sections" not in gaps:
+            gaps["unclear_sections"] = []
+        if "inconsistencies" not in gaps:
+            gaps["inconsistencies"] = []
+        
+        # Debug: Log the gaps being used
+        print(f"\n📊 DEBUG: Processing {candidate_name}")
+        print(f"   Overall Score: {overall_score}")
+        print(f"   Missing Skills Count: {len(gaps.get('missing_skills', []))}")
+        print(f"   Missing Skills: {gaps.get('missing_skills', [])}")
+        
         reasoning = interview_data.get("reasoning", "")
         strengths = interview_data.get("strengths", "")
         areas_for_growth = interview_data.get("areas_for_growth", "")

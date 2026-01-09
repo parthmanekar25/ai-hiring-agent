@@ -92,6 +92,30 @@ class ScorerAgent:
         
         return missing_skills
     
+    def _infer_missing_skills(self, result: dict, response_text: str) -> List[str]:
+        """Infer missing skills from score and skill_matches when extraction fails"""
+        missing_skills = []
+        
+        # If we have skill_matches, identify which ones are NOT present
+        skill_matches = result.get('skill_matches', [])
+        
+        # Look for skills mentioned in the response that are marked as NOT present
+        for skill_match in skill_matches:
+            if isinstance(skill_match, dict):
+                if not skill_match.get('present', False):
+                    skill_name = skill_match.get('skill', '')
+                    if skill_name and skill_name not in missing_skills:
+                        missing_skills.append(skill_name)
+        
+        # If still no missing skills but score is moderate/low, try to extract from response text
+        if not missing_skills and float(result.get('overall_score', 100)) < 75:
+            # Look for phrases that indicate incomplete skills
+            inferred = self._extract_missing_skills(response_text)
+            if inferred:
+                missing_skills = inferred
+        
+        return missing_skills
+    
     async def score(self, job_description: str, analysis: dict) -> dict:
         """Score candidate based on analysis using advanced prompting"""
         
@@ -164,6 +188,12 @@ class ScorerAgent:
                 extracted_skills = self._extract_missing_skills(response.content)
                 if extracted_skills:
                     result['gaps']['missing_skills'] = extracted_skills
+                # If still no gaps extracted but score indicates gaps exist, infer from score
+                elif float(result.get('overall_score', 100)) < 75:
+                    # Score < 75 suggests there are gaps - try to infer from skill_matches
+                    missing = self._infer_missing_skills(result, response.content)
+                    if missing:
+                        result['gaps']['missing_skills'] = missing
             
             return result
         except Exception as e:

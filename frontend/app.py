@@ -215,6 +215,24 @@ def display_candidate_evaluation(evaluation: dict, rank: int):
         st.subheader("✨ AI-Powered Explainability Analysis")
         
         # Prepare interview data for explainability
+        gaps = evaluation.get('gaps', {
+            "missing_skills": [],
+            "unclear_sections": [],
+            "inconsistencies": []
+        })
+        
+        # Ensure gaps structure is complete
+        if not gaps:
+            gaps = {"missing_skills": [], "unclear_sections": [], "inconsistencies": []}
+        
+        # If no missing_skills but score < 75, infer from skill_matches
+        if not gaps.get('missing_skills') and score['overall_score'] < 75:
+            skill_matches = evaluation.get('skill_matches', [])
+            missing = [s['skill'] for s in skill_matches if not s.get('present', True)]
+            if missing:
+                gaps['missing_skills'] = missing
+                st.warning(f"⚠️ Inferred missing skills: {', '.join(missing)}")
+        
         interview_data = {
             "candidate_name": evaluation['candidate_name'],
             "overall_score": score['overall_score'],
@@ -223,15 +241,11 @@ def display_candidate_evaluation(evaluation: dict, rank: int):
             "education_score": score['education_fit'],
             "skill_analysis": {
                 "matched_skills": evaluation.get('skill_matches', []),
-                "gaps": evaluation.get('gaps', {
-                    "missing_skills": [],
-                    "unclear_sections": [],
-                    "inconsistencies": []
-                })
+                "gaps": gaps
             },
             "reasoning": score.get('reasoning', ''),
             "strengths": evaluation.get('summary', ''),
-            "areas_for_growth": ' '.join(evaluation.get('gaps', {}).get('missing_skills', [])),
+            "areas_for_growth": ' '.join(gaps.get('missing_skills', [])),
             "experience_level": "mid",
             "learning_velocity": 1.0,
             "include_candidate_feedback": False
