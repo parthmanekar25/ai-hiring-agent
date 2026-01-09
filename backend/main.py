@@ -17,6 +17,7 @@ from agents.resume_analyzer import ResumeAnalyzerAgent
 from agents.scorer import ScorerAgent
 from agents.question_generator import QuestionGeneratorAgent
 from utils.pdf_parser import extract_text_from_pdf, clean_text
+from api.routes.explainability_routes import router as explainability_router
 
 load_dotenv()
 
@@ -30,6 +31,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include explainability routes
+app.include_router(explainability_router, prefix="/api/v1", tags=["explainability"])
+
 # Configure Groq API
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # Initialize agents
