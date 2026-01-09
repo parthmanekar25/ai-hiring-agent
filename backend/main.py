@@ -3,7 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import time
 import os
+import sys
 from dotenv import load_dotenv
+
+# Add backend directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from models.schemas import (
     CandidateEvaluation, EvaluationResponse,
@@ -113,7 +117,9 @@ async def evaluate_candidates(
         except Exception as e:
             import traceback
             error_msg = f"Error processing {resume_file.filename}: {str(e)}\n{traceback.format_exc()}"
-            print(error_msg)
+            print(f"❌ {error_msg}")
+            import sys
+            traceback.print_exc(file=sys.stdout)
             continue
     
     processing_time = time.time() - start_time
