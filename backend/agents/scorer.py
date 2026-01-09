@@ -4,6 +4,7 @@ import json
 import re
 import os
 import sys
+from typing import List
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -21,6 +22,69 @@ class ScorerAgent:
         self.prompt_manager = get_prompt_manager()
         self.use_cot = use_cot
         self.model = model
+    
+    def _extract_missing_skills(self, response_text: str) -> List[str]:
+        """Extract missing skills from LLM response text"""
+        missing_skills = []
+        
+        # List of common skills to search for
+        common_skills = [
+            "Python", "JavaScript", "TypeScript", "Java", "C#", "Go", "Rust", "Ruby", "PHP",
+            "FastAPI", "Django", "Flask", "Node.js", "Express", "React", "Vue", "Angular",
+            "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch",
+            "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Terraform",
+            "Git", "Linux", "Bash", "SQL", "HTML", "CSS",
+            "REST API", "GraphQL", "Microservices", "CI/CD", "Agile",
+            "Machine Learning", "Data Science", "TensorFlow", "PyTorch",
+            "Leadership", "Mentoring", "Communication", "Project Management"
+        ]
+        
+        response_lower = response_text.lower()
+        
+        # Search for patterns like "missing: skill1, skill2" or "not mentioned: skill1"
+        missing_patterns = [
+            r'missing(?:\s+skills?)?:\s*([^.\n]*)',
+            r'not mentioned:\s*([^.\n]*)',
+            r'no(?:\s+\w+)?\s+(?:experience|expertise|background)?\s+(?:in|with):\s*([^.\n]*)',
+            r'lacks?(?:\s+(?:experience|expertise|background|knowledge))?(?:\s+(?:in|with))?\s*:?\s*([^.\n]*)',
+            r'needs?(?:\s+(?:experience|expertise|background|knowledge))?(?:\s+(?:in|with))?\s*:?\s*([^.\n]*)',
+            r'required\s+(?:but\s+)?(?:missing|absent):\s*([^.\n]*)',
+            r'lack(?:s|ing)?\s+(?:experience|expertise|background|knowledge)?\s+(?:in|with)?\s*([^.\n]*)',
+        ]
+        
+        for pattern in missing_patterns:
+            matches = re.findall(pattern, response_lower)
+            if matches:
+                for match in matches:
+                    # Split by commas and clean up
+                    skills = [s.strip() for s in match.split(',')]
+                    for skill in skills:
+                        # Check if it matches any common skill
+                        for common_skill in common_skills:
+                            if common_skill.lower() in skill.lower():
+                                missing_skills.append(common_skill)
+                                break
+        
+        # Also check for explicitly listed missing skills in JSON format
+        try:
+            missing_json_match = re.search(r'"missing_skills"\s*:\s*\[([^\]]*)\]', response_text)
+            if missing_json_match:
+                skills_str = missing_json_match.group(1)
+                # Extract quoted strings
+                quoted_skills = re.findall(r'"([^"]*)"', skills_str)
+                missing_skills.extend(quoted_skills)
+        except:
+            pass
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_skills = []
+        for skill in missing_skills:
+            if skill not in seen:
+                seen.add(skill)
+                unique_skills.append(skill)
+        
+        return unique_skills
     
     async def score(self, job_description: str, analysis: dict) -> dict:
         """Score candidate based on analysis using advanced prompting"""
@@ -82,11 +146,18 @@ class ScorerAgent:
             
             # Handle gaps
             if 'gaps' not in result or not result['gaps']:
+                # Try to extract missing_skills from response text even if JSON parsing didn't get them
+                extracted_skills = self._extract_missing_skills(response.content)
                 result['gaps'] = {
-                    'missing_skills': [],
+                    'missing_skills': extracted_skills if extracted_skills else [],
                     'unclear_sections': [],
                     'inconsistencies': []
                 }
+            elif result.get('gaps', {}).get('missing_skills') is None or (isinstance(result.get('gaps', {}).get('missing_skills'), list) and len(result['gaps']['missing_skills']) == 0):
+                # If gaps exists but missing_skills is empty, try extraction
+                extracted_skills = self._extract_missing_skills(response.content)
+                if extracted_skills:
+                    result['gaps']['missing_skills'] = extracted_skills
             
             return result
         except Exception as e:
@@ -112,6 +183,9 @@ class ScorerAgent:
                 exp = re.search(r'"experience_fit"\s*:\s*(\d+\.?\d*)', response.content)
                 edu = re.search(r'"education_fit"\s*:\s*(\d+\.?\d*)', response.content)
                 
+                # Try to extract gaps from the response text
+                missing_skills = self._extract_missing_skills(response.content)
+                
                 if overall:
                     return {
                         "overall_score": float(overall.group(1)),
@@ -121,7 +195,7 @@ class ScorerAgent:
                         "reasoning": response.content,
                         "skill_matches": [],
                         "gaps": {
-                            'missing_skills': [],
+                            'missing_skills': missing_skills,
                             'unclear_sections': [],
                             'inconsistencies': []
                         }
@@ -130,6 +204,7 @@ class ScorerAgent:
                 pass
             
             # Return defaults with raw reasoning
+            missing_skills = self._extract_missing_skills(response.content)
             return {
                 "overall_score": 50,
                 "technical_fit": 50,
@@ -138,7 +213,7 @@ class ScorerAgent:
                 "reasoning": response.content,
                 "skill_matches": [],
                 "gaps": {
-                    'missing_skills': [],
+                    'missing_skills': missing_skills,
                     'unclear_sections': [],
                     'inconsistencies': []
                 }
