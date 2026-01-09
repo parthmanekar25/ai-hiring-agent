@@ -6,8 +6,10 @@ A production-ready full-stack application for intelligent candidate evaluation u
 
 - ✅ **Deep Resume Analysis** - Detailed assessment against job requirements
 - ✅ **Fair Candidate Scoring** - 0-100 scores with transparent reasoning
-- ✅ **Interview Question Generation** - Strategic, targeted questions
+- ✅ **Interview Question Generation** - Strategic, targeted questions (5-7 per candidate)
 - ✅ **Skill Gap Analysis** - Missing skills and concerns identification
+- ✅ **Explainability Artifacts** - Recruiter & candidate-friendly explanations with training plans
+- ✅ **Investment Analysis** - Time, cost, and ROI estimates for onboarding
 - ✅ **Functional UI** - Streamlit frontend with charts and visualizations
 
 ## 🚀 Quick Start
@@ -117,6 +119,11 @@ ai-hiring-agent/
 │   │   ├── prompt_manager.py
 │   │   ├── context_optimizer.py
 │   │   └── chain_of_thought.py
+│   ├── explainability/         # Explainability artifacts
+│   │   ├── explainability_generator.py
+│   │   ├── integration.py
+│   │   ├── workflow_integration.py
+│   │   └── test_explainability.py
 │   ├── models/
 │   │   └── schemas.py          # Data validation
 │   └── utils/
@@ -132,6 +139,7 @@ ai-hiring-agent/
 ├── .env                        # Configuration (GROQ_API_KEY)
 ├── start.sh                    # Startup script (macOS/Linux)
 ├── start.bat                   # Startup script (Windows)
+├── EXPLAINABILITY.md           # Explainability feature docs
 └── test_context_engineering.py # Test suite
 ```
 
@@ -157,7 +165,7 @@ Results Display (Frontend)
 ### Tech Stack
 - **Frontend:** Streamlit (Python)
 - **Backend:** FastAPI (Python)
-- **LLM:** Groq (Mixtral 8x7b)
+- **LLM:** Groq(llams)
 - **AI Framework:** LangChain
 - **File Processing:** PyPDF2
 - **Validation:** Pydantic
@@ -218,11 +226,22 @@ ALL TESTS PASSED ✓
 - Reasoning and confidence
 
 ### Interview Questions
-- Targeted, specific questions
+- Targeted, specific questions (5-7 per candidate)
 - Addresses identified gaps
 - Tests depth of knowledge
 - Covers both technical and soft skills
 - Includes follow-up strategies
+
+### Explainability Artifacts
+- Recruiter-friendly explanations with hiring recommendations
+- Candidate-friendly feedback (optional)
+- Training plans with time and resource estimates
+- Investment analysis with ROI projections
+- Role-specific fit analysis
+
+Example: *"Score reduced by 12 points due to missing Docker experience; however, growth potential remains high based on learning velocity indicators. Estimated training: 30 hours (~3 weeks). Cost range: $150-300."*
+
+See [EXPLAINABILITY.md](./EXPLAINABILITY.md) for detailed documentation.
 
 ### Results Export
 - Download as JSON
