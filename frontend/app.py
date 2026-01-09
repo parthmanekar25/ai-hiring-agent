@@ -4,19 +4,39 @@ import json
 import time
 from typing import List
 import os
+import sys
 from dotenv import load_dotenv
-from frontend.services.explainability import (
-    ExplainabilityService,
-    display_hiring_decision,
-    display_recruiter_explanation,
-    display_candidate_feedback,
-    display_training_plan,
-    display_investment_analysis,
-    display_role_fit_analysis,
-    display_score_rationale,
-    export_explainability_report,
-    create_explainability_sidebar_options
-)
+
+# Add parent directory to path to allow imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from frontend.services.explainability import (
+        ExplainabilityService,
+        display_hiring_decision,
+        display_recruiter_explanation,
+        display_candidate_feedback,
+        display_training_plan,
+        display_investment_analysis,
+        display_role_fit_analysis,
+        display_score_rationale,
+        export_explainability_report,
+        create_explainability_sidebar_options
+    )
+except ImportError:
+    # Fallback for when running from frontend directory
+    from services.explainability import (
+        ExplainabilityService,
+        display_hiring_decision,
+        display_recruiter_explanation,
+        display_candidate_feedback,
+        display_training_plan,
+        display_investment_analysis,
+        display_role_fit_analysis,
+        display_score_rationale,
+        export_explainability_report,
+        create_explainability_sidebar_options
+    )
 
 # Load environment variables
 load_dotenv()
