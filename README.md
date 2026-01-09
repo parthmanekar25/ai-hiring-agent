@@ -8,7 +8,7 @@ A production-ready full-stack application for intelligent candidate evaluation u
 - ✅ **Fair Candidate Scoring** - 0-100 scores with transparent reasoning
 - ✅ **Interview Question Generation** - Strategic, targeted questions
 - ✅ **Skill Gap Analysis** - Missing skills and concerns identification
-- ✅ **Beautiful UI** - Streamlit frontend with charts and visualizations
+- ✅ **Functional UI** - Streamlit frontend with charts and visualizations
 
 ## 🚀 Quick Start
 
