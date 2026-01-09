@@ -39,31 +39,43 @@ class ScorerAgent:
             "Leadership", "Mentoring", "Communication", "Project Management"
         ]
         
-        response_lower = response_text.lower()
+        response_text_lower = response_text.lower()
         
-        # Search for patterns like "missing: skill1, skill2" or "not mentioned: skill1"
-        missing_patterns = [
-            r'missing(?:\s+skills?)?:\s*([^.\n]*)',
-            r'not mentioned:\s*([^.\n]*)',
-            r'no(?:\s+\w+)?\s+(?:experience|expertise|background)?\s+(?:in|with):\s*([^.\n]*)',
-            r'lacks?(?:\s+(?:experience|expertise|background|knowledge))?(?:\s+(?:in|with))?\s*:?\s*([^.\n]*)',
-            r'needs?(?:\s+(?:experience|expertise|background|knowledge))?(?:\s+(?:in|with))?\s*:?\s*([^.\n]*)',
-            r'required\s+(?:but\s+)?(?:missing|absent):\s*([^.\n]*)',
-            r'lack(?:s|ing)?\s+(?:experience|expertise|background|knowledge)?\s+(?:in|with)?\s*([^.\n]*)',
+        # First, look for explicit skill mentions after gap keywords
+        # This catches phrases like "missing X, Y, Z" or "lacks X and Y"
+        gap_keywords = [
+            'missing', 'lacks?', 'lack', 'lacking', 'no experience', 'no expertise',
+            'no background', 'not mentioned', 'not discussed', 'needs?', 'need', 'requiring',
+            'required but'
         ]
         
-        for pattern in missing_patterns:
-            matches = re.findall(pattern, response_lower)
-            if matches:
-                for match in matches:
-                    # Split by commas and clean up
-                    skills = [s.strip() for s in match.split(',')]
-                    for skill in skills:
-                        # Check if it matches any common skill
-                        for common_skill in common_skills:
-                            if common_skill.lower() in skill.lower():
-                                missing_skills.append(common_skill)
-                                break
+        # For each skill, check if it appears near any gap keyword
+        for skill in common_skills:
+            skill_lower = skill.lower()
+            
+            # Find all positions of the skill in the text
+            positions = []
+            start = 0
+            while True:
+                pos = response_text_lower.find(skill_lower, start)
+                if pos == -1:
+                    break
+                positions.append(pos)
+                start = pos + 1
+            
+            # For each skill position, check if a gap keyword appears nearby
+            for skill_pos in positions:
+                # Look back 100 characters for gap keywords
+                context_start = max(0, skill_pos - 100)
+                context = response_text_lower[context_start:skill_pos + len(skill_lower) + 50]
+                
+                # Check if any gap keyword appears in the context
+                for keyword in gap_keywords:
+                    if keyword in context:
+                        # Found a skill near a gap keyword
+                        if skill not in missing_skills:
+                            missing_skills.append(skill)
+                        break
         
         # Also check for explicitly listed missing skills in JSON format
         try:
@@ -72,19 +84,13 @@ class ScorerAgent:
                 skills_str = missing_json_match.group(1)
                 # Extract quoted strings
                 quoted_skills = re.findall(r'"([^"]*)"', skills_str)
-                missing_skills.extend(quoted_skills)
+                for skill in quoted_skills:
+                    if skill not in missing_skills:
+                        missing_skills.append(skill)
         except:
             pass
         
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_skills = []
-        for skill in missing_skills:
-            if skill not in seen:
-                seen.add(skill)
-                unique_skills.append(skill)
-        
-        return unique_skills
+        return missing_skills
     
     async def score(self, job_description: str, analysis: dict) -> dict:
         """Score candidate based on analysis using advanced prompting"""
