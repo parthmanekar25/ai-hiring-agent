@@ -1,0 +1,113 @@
+╔════════════════════════════════════════════════════════════════════╗
+║             AI HIRING AGENT - QUICK START REFERENCE              ║
+╚════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ 30-SECOND SETUP
+
+  1. Get Groq API key: https://console.groq.com
+  2. Create .env file:  echo "GROQ_API_KEY=your_key" > .env
+  3. Install:           pip install -r requirements.txt
+  4. Run backend:       python backend/main.py
+  5. Run frontend:      streamlit run frontend/app.py
+  6. Open browser:      http://localhost:8501
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTATION MAP
+
+  README.md                 → Start here
+  SETUP.md                  → Installation help
+  ARCHITECTURE.md           → How it works
+  API.md                    → API reference
+  DECISIONS.md              → Why it's designed this way
+  DOCS_INDEX.md             → Find what you need
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 COMMON TASKS
+
+  Install dependencies:    pip install -r requirements.txt
+  Create virtual env:      python3 -m venv .venv
+  Activate venv:           source .venv/bin/activate
+  Start backend:           python backend/main.py
+  Start frontend:          streamlit run frontend/app.py
+  Check health:            curl http://localhost:8000/health
+  Test API:                curl -X POST http://localhost:8000/api/evaluate ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ FIND ANSWERS
+
+  Q: How do I install?            → SETUP.md
+  Q: How does it work?            → ARCHITECTURE.md
+  Q: What's the API?              → API.md
+  Q: Why this design?             → DECISIONS.md
+  Q: How to use it?               → README.md
+  Q: Something broken?            → SETUP.md (troubleshooting)
+  Q: Can I customize?             → ARCHITECTURE.md (extensibility)
+  Q: Lost in docs?                → DOCS_INDEX.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️ CONFIGURATION
+
+  .env file (REQUIRED):
+    GROQ_API_KEY=sk-xxxxxxxxxxxx
+
+  Optional .env settings:
+    BACKEND_PORT=8000
+    DEBUG=true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 URLS
+
+  Frontend UI:         http://localhost:8501
+  Backend API:         http://localhost:8000
+  API Docs:            http://localhost:8000/docs
+  Health Check:        http://localhost:8000/health
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 PROCESSING TIME
+
+  1 resume:       45-70 seconds
+  5 resumes:      5-8 minutes
+  10 resumes:     10-15 minutes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 TIPS
+
+  • First run is slower (model loading)
+  • Use fewer resumes for faster processing
+  • Job description should have specific skills
+  • Resumes work best in PDF or TXT format
+  • Use with human judgment, not as sole decision
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🆘 TROUBLESHOOTING
+
+  Backend won't start?
+    → Check: lsof -ti:8000 (kill if running)
+    → Or: Change port in backend/main.py
+
+  No GROQ_API_KEY?
+    → Create .env with your API key
+    → Get key: https://console.groq.com
+
+  Frontend can't connect?
+    → Check: Backend running at localhost:8000
+    → Try: curl http://localhost:8000/health
+
+  PDF upload fails?
+    → Try: Uploading as .txt instead
+    → Check: PDF isn't encrypted or corrupted
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Version: 1.0 | Status: ✅ Complete | Last Updated: Jan 2026
+
