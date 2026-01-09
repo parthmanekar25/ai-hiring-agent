@@ -5,12 +5,25 @@ import time
 from typing import List
 import os
 from dotenv import load_dotenv
+from frontend.services.explainability import (
+    ExplainabilityService,
+    display_hiring_decision,
+    display_recruiter_explanation,
+    display_candidate_feedback,
+    display_training_plan,
+    display_investment_analysis,
+    display_role_fit_analysis,
+    display_score_rationale,
+    export_explainability_report,
+    create_explainability_sidebar_options
+)
 
 # Load environment variables
 load_dotenv()
 
 # Configuration
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+explainability_service = ExplainabilityService(BACKEND_URL)
 
 # Page configuration
 st.set_page_config(
@@ -147,7 +160,7 @@ def evaluate_candidates(job_description: str, resume_files: List) -> dict:
 
 
 def display_candidate_evaluation(evaluation: dict, rank: int):
-    """Display individual candidate evaluation"""
+    """Display individual candidate evaluation with explainability"""
     with st.container():
         st.markdown(f"""
         <div class="candidate-card">
@@ -177,6 +190,111 @@ def display_candidate_evaluation(evaluation: dict, rank: int):
         if evaluation.get('summary'):
             with st.expander("📄 Executive Summary"):
                 st.write(evaluation['summary'])
+        
+        # ===== NEW: EXPLAINABILITY SECTION =====
+        st.subheader("✨ AI-Powered Explainability Analysis")
+        
+        # Prepare interview data for explainability
+        interview_data = {
+            "candidate_name": evaluation['candidate_name'],
+            "overall_score": score['overall_score'],
+            "technical_score": score['technical_fit'],
+            "experience_score": score['experience_fit'],
+            "education_score": score['education_fit'],
+            "skill_analysis": {
+                "matched_skills": evaluation.get('skill_matches', []),
+                "gaps": evaluation.get('gaps', {
+                    "missing_skills": [],
+                    "unclear_sections": [],
+                    "inconsistencies": []
+                })
+            },
+            "reasoning": score.get('reasoning', ''),
+            "strengths": evaluation.get('summary', ''),
+            "areas_for_growth": ' '.join(evaluation.get('gaps', {}).get('missing_skills', [])),
+            "experience_level": "mid",
+            "learning_velocity": 1.0,
+            "include_candidate_feedback": False
+        }
+        
+        # Generate explainability
+        with st.spinner("🔄 Generating explainability artifacts..."):
+            explainability_result = explainability_service.generate_hiring_decision(
+                interview_data=interview_data
+            )
+        
+        if explainability_result['success']:
+            explainability = explainability_result['data']
+            
+            # Display hiring decision prominently
+            if 'hiring_decision' in explainability:
+                display_hiring_decision(explainability['hiring_decision'])
+            
+            # Recruiter explanation
+            if 'recruiter_explanation' in explainability:
+                display_recruiter_explanation(explainability['recruiter_explanation'])
+            
+            # Training plan
+            if 'training_plan' in explainability:
+                display_training_plan(explainability['training_plan'])
+            
+            # Investment analysis
+            if 'investment_summary' in explainability:
+                display_investment_analysis(explainability['investment_summary'])
+            
+            # Score rationale
+            if 'score_rationale' in explainability:
+                display_score_rationale(explainability['score_rationale'])
+            
+            # Export options
+            st.markdown("---")
+            st.subheader("📥 Export Explainability Report")
+            
+            export_col1, export_col2, export_col3 = st.columns(3)
+            
+            with export_col1:
+                json_report = export_explainability_report(
+                    evaluation['candidate_name'],
+                    explainability,
+                    "json"
+                )
+                st.download_button(
+                    label="📄 JSON Report",
+                    data=json_report,
+                    file_name=f"{evaluation['candidate_name']}_explainability.json",
+                    mime="application/json"
+                )
+            
+            with export_col2:
+                text_report = export_explainability_report(
+                    evaluation['candidate_name'],
+                    explainability,
+                    "text"
+                )
+                st.download_button(
+                    label="📋 Text Report",
+                    data=text_report,
+                    file_name=f"{evaluation['candidate_name']}_explainability.txt",
+                    mime="text/plain"
+                )
+            
+            with export_col3:
+                md_report = export_explainability_report(
+                    evaluation['candidate_name'],
+                    explainability,
+                    "markdown"
+                )
+                st.download_button(
+                    label="📝 Markdown Report",
+                    data=md_report,
+                    file_name=f"{evaluation['candidate_name']}_explainability.md",
+                    mime="text/markdown"
+                )
+        
+        else:
+            st.warning(f"⚠️ Could not generate explainability: {explainability_result.get('error', 'Unknown error')}")
+        
+        # ===== END EXPLAINABILITY SECTION =====
         
         # Skill Matches
         with st.expander("💡 Skill Analysis"):
@@ -244,6 +362,7 @@ def main():
         - Identify skill gaps and concerns
         - Generate targeted interview questions
         - Detect keyword stuffing and inconsistencies
+        - ✨ Generate explainability artifacts
         """)
         
         st.header("🔧 Backend Status")
@@ -258,6 +377,23 @@ def main():
         1. **Resume Analyzer Agent**: Deep analysis of qualifications
         2. **Scorer Agent**: Consistent scoring with reasoning
         3. **Question Generator**: Targeted interview questions
+        4. **✨ Explainability**: Training plans & ROI analysis
+        """)
+        
+        st.markdown("---")
+        st.subheader("✨ What's Explainability?")
+        st.markdown("""
+        AI-generated insights that explain hiring decisions:
+        
+        **For Recruiters:**
+        - Hiring recommendations with confidence
+        - Training plans with time & cost estimates
+        - ROI analysis & productivity projections
+        
+        **For Candidates:**
+        - Growth-focused feedback (optional)
+        - Transparent evaluation explanation
+        - Clear next steps & development areas
         """)
     
     # Main content
@@ -338,7 +474,7 @@ def main():
                         st.warning("⚠️ No candidates were successfully evaluated. Please check your uploads and try again.")
                     else:
                         # Summary metrics
-                        col1, col2, col3 = st.columns(3)
+                        col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             st.metric("Total Candidates", len(data['evaluations']))
                         with col2:
@@ -349,8 +485,56 @@ def main():
                                 st.metric("Average Score", "N/A")
                         with col3:
                             st.metric("Processing Time", f"{data['processing_time']:.1f}s")
+                        with col4:
+                            strong_hires = sum(1 for e in data['evaluations'] 
+                                             if e.get('explainability', {}).get('hiring_decision', {}).get('recommendation') == 'STRONG_HIRE')
+                            st.metric("Strong Hires", strong_hires)
                         
                         st.markdown("---")
+                        
+                        # Explainability Summary (if available)
+                        explainability_available = any(
+                            e.get('explainability') for e in data['evaluations']
+                        )
+                        
+                        if explainability_available:
+                            st.subheader("✨ Explainability Summary")
+                            
+                            # Hiring decision distribution
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                decision_counts = {}
+                                total_investment = 0
+                                training_hours = 0
+                                
+                                for e in data['evaluations']:
+                                    exp = e.get('explainability', {})
+                                    if exp:
+                                        decision = exp.get('hiring_decision', {}).get('recommendation', 'UNKNOWN')
+                                        decision_counts[decision] = decision_counts.get(decision, 0) + 1
+                                        
+                                        # Calculate totals
+                                        training_plan = exp.get('training_plan', {})
+                                        total_investment += training_plan.get('total_cost', 0)
+                                        training_hours += training_plan.get('total_hours', 0)
+                                
+                                st.write("**Hiring Recommendations:**")
+                                for decision, count in sorted(decision_counts.items(), key=lambda x: -x[1]):
+                                    emoji = {
+                                        'STRONG_HIRE': '🟢',
+                                        'HIRE_WITH_TRAINING': '🟡',
+                                        'CONDITIONAL_HIRE': '🟠',
+                                        'RECONSIDER': '🔴'
+                                    }.get(decision, '⚪')
+                                    st.write(f"{emoji} {decision}: {count}")
+                            
+                            with col2:
+                                st.metric("Total Training Investment", f"${total_investment:,.0f}")
+                                st.metric("Total Training Hours", f"{training_hours:.0f} hrs")
+                            
+                            st.markdown("---")
+                        
+                        st.markdown("")
                         
                         # Display each candidate
                         for rank, evaluation in enumerate(data['evaluations'], 1):
@@ -376,7 +560,7 @@ def main():
         ### Setup Requirements
         1. Ensure the FastAPI backend is running (`python backend/main.py`)
         2. Backend should be accessible at `http://localhost:8000`
-        3. You need a valid OpenAI API key configured in the backend
+        3. You need a valid Groq API key configured in the backend
         
         ### Evaluation Process
         1. **Paste Job Description**: Include all requirements, responsibilities, and qualifications
@@ -384,11 +568,43 @@ def main():
         3. **Click Evaluate**: The AI agents will analyze each candidate
         
         ### What You Get
+        
+        #### Basic Evaluation
         - **Overall Score**: 0-100 rating based on job fit
         - **Skill Analysis**: Which required skills are present/missing
         - **Gap Analysis**: Missing skills, unclear sections, inconsistencies
         - **Interview Questions**: Targeted questions based on candidate's profile
         - **Detailed Reasoning**: Transparent explanation of scores
+        
+        #### ✨ Explainability Artifacts (NEW!)
+        
+        **Recruiter-Focused:**
+        - **Hiring Recommendation**: STRONG_HIRE / HIRE_WITH_TRAINING / CONDITIONAL_HIRE / RECONSIDER
+        - **Training Plan**: Specific skills with hours, resources, and cost estimates
+        - **Investment Analysis**: ROI projections, time to productivity, mentorship requirements
+        - **Role-Fit Analysis**: How well candidate matches your job requirements
+        
+        **Candidate-Friendly (Optional):**
+        - **Growth-Oriented Feedback**: Encouraging, transparent feedback
+        - **Development Areas**: Specific skills for growth
+        - **Next Steps**: Clear action items
+        
+        **Export Options:**
+        - Download reports as JSON, Text, or Markdown
+        - Share with team or HR systems
+        
+        ### Example: Training Plan
+        - **Docker**: 30 hours (~3 weeks, $150) - Easy
+        - **Kubernetes**: 100 hours (~10 weeks, $1,500) - Hard
+        - **AWS**: 120 hours (~12 weeks, $1,800) - Hard
+        - **Total**: 250 hours (~25 weeks, $3,450 budget)
+        
+        ### Example: ROI Analysis
+        - **Investment Level**: HIGH
+        - **Break-even Point**: 25 weeks
+        - **Month 1 Productivity**: 45%
+        - **Month 3 Productivity**: 75%
+        - **Month 6 Productivity**: 95%
         
         ### Tips for Best Results
         - Be specific in job descriptions
@@ -396,6 +612,8 @@ def main():
         - Upload clean, well-formatted resumes
         - Review the reasoning behind scores
         - Use generated questions as interview starting points
+        - Review explainability artifacts for hiring decisions
+        - Export reports for team review
         
         ### Anti-Keyword-Stuffing
         The AI agents are trained to:
