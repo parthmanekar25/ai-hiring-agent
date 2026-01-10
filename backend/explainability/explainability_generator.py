@@ -104,7 +104,120 @@ class ExplainabilityGenerator:
                 "difficulty": "hard",
                 "priority": "high"
             },
+            "Edge Deployment": {
+                "hours": 70,
+                "resources": ["TensorFlow Lite docs", "Edge Impulse", "NVIDIA Jetson docs"],
+                "difficulty": "hard",
+                "priority": "high"
+            },
+            "Hybrid ML Pipelines": {
+                "hours": 100,
+                "resources": ["Apache Airflow docs", "Kubeflow", "ML Pipelines courses"],
+                "difficulty": "hard",
+                "priority": "high"
+            },
+            "Cloud Computing": {
+                "hours": 80,
+                "resources": ["AWS training", "Azure fundamentals", "GCP courses"],
+                "difficulty": "hard",
+                "priority": "high"
+            },
+            "Time-Series Analysis": {
+                "hours": 60,
+                "resources": ["Statsmodels docs", "Time Series courses", "Kaggle competitions"],
+                "difficulty": "medium",
+                "priority": "medium"
+            },
+            "Network Intelligence": {
+                "hours": 90,
+                "resources": ["Network analysis courses", "Graph neural networks", "NetworkX docs"],
+                "difficulty": "hard",
+                "priority": "medium"
+            },
+            "Large Language Models": {
+                "hours": 120,
+                "resources": ["OpenAI API docs", "Hugging Face tutorials", "LangChain docs"],
+                "difficulty": "hard",
+                "priority": "high"
+            },
+            "TypeScript": {
+                "hours": 50,
+                "resources": ["TypeScript official docs", "Udemy TypeScript", "TypeScript Deep Dive"],
+                "difficulty": "medium",
+                "priority": "high"
+            },
+            "Node.js": {
+                "hours": 60,
+                "resources": ["Node.js official docs", "Express.js tutorials", "Node.js courses"],
+                "difficulty": "medium",
+                "priority": "high"
+            },
+            "MongoDB": {
+                "hours": 50,
+                "resources": ["MongoDB university", "MongoDB docs", "Udemy MongoDB"],
+                "difficulty": "medium",
+                "priority": "medium"
+            },
+            "Redis": {
+                "hours": 40,
+                "resources": ["Redis official docs", "Redis University", "Pluralsight Redis"],
+                "difficulty": "medium",
+                "priority": "medium"
+            },
         }
+    
+    def _get_skill_hours(self, skill: str) -> Dict[str, Any]:
+        """Get training hours for a skill, with fallback for unknown skills"""
+        if skill in self.skill_training_map:
+            return self.skill_training_map[skill]
+        
+        # Fallback for unknown skills - estimate based on keyword analysis
+        skill_lower = skill.lower()
+        
+        # Determine difficulty and hours based on keywords
+        if any(keyword in skill_lower for keyword in ["ml", "ai", "machine learning", "deep", "neural", "llm"]):
+            return {
+                "hours": 100,
+                "resources": ["Official documentation", "Online courses", "Hands-on projects"],
+                "difficulty": "hard",
+                "priority": "high"
+            }
+        elif any(keyword in skill_lower for keyword in ["cloud", "aws", "azure", "gcp", "deployment", "infrastructure"]):
+            return {
+                "hours": 80,
+                "resources": ["Official cloud documentation", "Cloud training", "Hands-on labs"],
+                "difficulty": "hard",
+                "priority": "high"
+            }
+        elif any(keyword in skill_lower for keyword in ["frontend", "ui", "ux", "web", "react", "vue", "angular"]):
+            return {
+                "hours": 60,
+                "resources": ["Framework documentation", "Online tutorials", "Code examples"],
+                "difficulty": "medium",
+                "priority": "high"
+            }
+        elif any(keyword in skill_lower for keyword in ["database", "sql", "nosql", "postgres", "mongo"]):
+            return {
+                "hours": 50,
+                "resources": ["Database documentation", "SQL tutorials", "Database courses"],
+                "difficulty": "medium",
+                "priority": "high"
+            }
+        elif any(keyword in skill_lower for keyword in ["devops", "ci", "cd", "jenkins", "docker", "kubernetes"]):
+            return {
+                "hours": 70,
+                "resources": ["DevOps documentation", "Pipeline courses", "Hands-on labs"],
+                "difficulty": "hard",
+                "priority": "high"
+            }
+        else:
+            # Generic skill - estimate medium difficulty
+            return {
+                "hours": 40,
+                "resources": ["Official documentation", "Online courses", "Practice projects"],
+                "difficulty": "medium",
+                "priority": "medium"
+            }
     
     def generate_recruiter_explanation(
         self,
@@ -233,24 +346,24 @@ Best of luck! We appreciate your interest.
         total_cost_estimate = 0
         
         for skill in missing_skills:
-            if skill in self.skill_training_map:
-                skill_info = self.skill_training_map[skill]
-                
-                # Adjust hours based on learning velocity
-                adjusted_hours = int(skill_info["hours"] / learning_velocity)
-                
-                training_requirements.append({
-                    "skill": skill,
-                    "estimated_hours": adjusted_hours,
-                    "resources": skill_info["resources"],
-                    "difficulty": skill_info["difficulty"],
-                    "priority": skill_info["priority"],
-                    "estimated_weeks": int(adjusted_hours / 10),  # Assuming 10 hrs/week
-                    "estimated_cost": self._estimate_cost(skill_info, adjusted_hours)
-                })
-                
-                total_hours += adjusted_hours
-                total_cost_estimate += self._estimate_cost(skill_info, adjusted_hours)
+            # Use fallback function that handles unknown skills
+            skill_info = self._get_skill_hours(skill)
+            
+            # Adjust hours based on learning velocity
+            adjusted_hours = int(skill_info["hours"] / learning_velocity)
+            
+            training_requirements.append({
+                "skill": skill,
+                "estimated_hours": adjusted_hours,
+                "resources": skill_info["resources"],
+                "difficulty": skill_info["difficulty"],
+                "priority": skill_info["priority"],
+                "estimated_weeks": int(adjusted_hours / 10),  # Assuming 10 hrs/week
+                "estimated_cost": self._estimate_cost(skill_info, adjusted_hours)
+            })
+            
+            total_hours += adjusted_hours
+            total_cost_estimate += self._estimate_cost(skill_info, adjusted_hours)
         
         # Sort by priority
         priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
