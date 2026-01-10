@@ -212,11 +212,11 @@ def display_training_plan(training_plan: Dict[str, Any]):
                     with metric_col4:
                         st.caption(f"📚 {len(resources)} resources")
                     
-                    # Resources
+                    # Resources - use columns instead of nested expander
                     if resources:
-                        with st.expander(f"Resources for {skill}", expanded=False):
-                            for idx, resource in enumerate(resources, 1):
-                                st.write(f"{idx}. {resource}")
+                        st.write(f"**📖 Resources:**")
+                        for idx, resource in enumerate(resources, 1):
+                            st.write(f"&nbsp;&nbsp;{idx}. {resource}")
                 
                 with col2:
                     # Visual progress bar representation
