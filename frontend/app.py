@@ -497,16 +497,52 @@ def main():
                 
                 if result['success']:
                     data = result['data']
-                    st.success(f"✅ Evaluation complete! Processed in {data['processing_time']:.1f}s")
+                    
+                    # Check for errors first
+                    errors = data.get('errors', [])
+                    successful = data.get('successful', len(data.get('evaluations', [])))
+                    failed = data.get('failed', len(errors))
+                    total = data.get('total_files', len(uploaded_files))
+                    
+                    # Show error messages if any
+                    if errors:
+                        st.error(f"⚠️ {failed} out of {total} resume(s) failed to process:")
+                        with st.expander("🔍 View Error Details", expanded=True):
+                            for error in errors:
+                                st.error(f"**{error.get('filename', 'Unknown file')}**: {error.get('error', 'Unknown error')}")
+                                if error.get('type') == 'empty_file':
+                                    st.info("💡 Tip: Make sure the file is not empty and contains readable content.")
+                                elif error.get('type') == 'pdf_parse_error':
+                                    st.info("💡 Tip: Try converting the PDF to TXT format or ensure the PDF is not encrypted.")
+                                elif error.get('type') == 'encoding_error':
+                                    st.info("💡 Tip: Ensure the file is saved in UTF-8 encoding.")
+                                elif error.get('type') == 'analysis_error':
+                                    st.info("💡 Tip: Check if the resume contains readable text and the job description is valid.")
+                                st.divider()
+                    
+                    # Check if we have evaluations
+                    if not data.get('evaluations'):
+                        st.error("⚠️ No candidates were successfully evaluated. Please check your uploads and try again.")
+                        if not errors:
+                            st.info("💡 Possible issues:\n"
+                                   "- Backend API key not configured (check GROQ_API_KEY in .env)\n"
+                                   "- Backend service not running\n"
+                                   "- Network connectivity issues\n"
+                                   "- Invalid file format or corrupted files")
+                        return
+                    
+                    # Show success message with stats
+                    if successful > 0:
+                        if failed > 0:
+                            st.warning(f"⚠️ Evaluation complete: {successful} succeeded, {failed} failed. Processed in {data['processing_time']:.1f}s")
+                        else:
+                            st.success(f"✅ Evaluation complete! Processed {successful} candidate(s) in {data['processing_time']:.1f}s")
                     
                     # Display results
                     st.header("📊 Evaluation Results")
                     st.markdown("---")
                     
-                    # Check if we have evaluations
-                    if not data['evaluations']:
-                        st.warning("⚠️ No candidates were successfully evaluated. Please check your uploads and try again.")
-                    else:
+                    if successful > 0:
                         # Summary metrics
                         col1, col2, col3, col4 = st.columns(4)
                         with col1:
@@ -585,7 +621,32 @@ def main():
                         )
                 
                 else:
-                    st.error(f"❌ Evaluation failed: {result['error']}")
+                    error_msg = result.get('error', 'Unknown error')
+                    st.error(f"❌ Evaluation failed: {error_msg}")
+                    
+                    # Provide helpful suggestions based on error type
+                    if "GROQ_API_KEY" in error_msg or "API key" in error_msg.lower():
+                        st.info("💡 **Solution**: Set up your Groq API key:\n"
+                               "1. Get a free API key at https://console.groq.com\n"
+                               "2. Create a `.env` file in the project root\n"
+                               "3. Add: `GROQ_API_KEY=your_key_here`\n"
+                               "4. Restart the backend server")
+                    elif "Cannot connect" in error_msg or "Connection" in error_msg:
+                        st.info("💡 **Solution**: Make sure the backend is running:\n"
+                               "1. Open a terminal\n"
+                               "2. Run: `python backend/main.py`\n"
+                               "3. Wait for: 'Uvicorn running on http://0.0.0.0:8000'\n"
+                               "4. Then try again")
+                    elif "timeout" in error_msg.lower():
+                        st.info("💡 **Solution**: The request took too long. Try:\n"
+                               "- Upload fewer resumes at once\n"
+                               "- Use simpler job descriptions\n"
+                               "- Check your internet connection")
+                    elif "500" in error_msg or "Internal Server Error" in error_msg:
+                        st.info("💡 **Solution**: Backend error occurred. Check:\n"
+                               "- Backend terminal for error messages\n"
+                               "- GROQ_API_KEY is set correctly\n"
+                               "- All dependencies are installed (`pip install -r requirements.txt`)")
     
     with tab2:
         st.header("📖 How to Use")

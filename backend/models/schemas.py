@@ -45,3 +45,7 @@ class CandidateEvaluation(BaseModel):
 class EvaluationResponse(BaseModel):
     evaluations: List[CandidateEvaluation]
     processing_time: float
+    errors: Optional[List[dict]] = []
+    total_files: int = 0
+    successful: int = 0
+    failed: int = 0
