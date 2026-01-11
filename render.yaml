@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# render.yaml - Render deployment configuration
+# For use with Render.com deployment
+
+# This file helps Render understand how to deploy your application
+# See: https://render.com/docs/deploy-from-repo
+
+services:
+  - type: web
+    name: ai-hiring-agent-backend
+    env: python
+    plan: free
+    
+    # GitHub repository settings
+    repo: https://github.com/parthmanekar25/ai-hiring-agent
+    branch: main
+    
+    # Root directory
+    rootDir: .
+    
+    # Build command
+    buildCommand: pip install -r requirements.txt
+    
+    # Start command
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    
+    # Port
+    envVars:
+      - key: GROQ_API_KEY
+        scope: build,runtime
+      - key: PORT
+        value: "8000"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+# Note: Environment variables should be added in the Render dashboard
+# under the service's "Environment" section for security
