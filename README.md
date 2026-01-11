@@ -454,4 +454,3 @@ Then open: **http://localhost:8501**
 
 **Questions?** See the documentation files in the project root.
 
-**Happy hiring! 🚀**
