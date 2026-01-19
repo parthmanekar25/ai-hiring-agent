@@ -556,9 +556,11 @@ def main():
                         with col3:
                             st.metric("Processing Time", f"{data['processing_time']:.1f}s")
                         with col4:
-                            strong_hires = sum(1 for e in data['evaluations'] 
-                                             if e.get('explainability', {}).get('hiring_decision', {}).get('recommendation') == 'STRONG_HIRE')
-                            st.metric("Strong Hires", strong_hires)
+                            # Commented out: Strong Hires metric
+                            # strong_hires = sum(1 for e in data['evaluations'] 
+                            #                     if e.get('explainability', {}).get('hiring_decision', {}).get('recommendation') == 'STRONG_HIRE')
+                            # st.metric("Strong Hires", strong_hires)
+                            st.metric("Total Evaluations", len(data['evaluations']))
                         
                         st.markdown("---")
                         
